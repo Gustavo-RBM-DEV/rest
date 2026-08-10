@@ -6,39 +6,25 @@ public abstract class Produto {
     protected double precoCusto;
     protected double margemLucro;
 
-    private void init(String desc, double precoCusto, double margemLucro) {
+    public Produto(String desc, double precoCusto, double margemLucro) {
         this.descricao = desc;
         this.precoCusto = precoCusto;
         this.margemLucro = margemLucro;
     }
 
-    protected Produto(String desc, double precoCusto, double margemLucro) {
-        init(desc, precoCusto, margemLucro);
-    }
-
-    protected Produto(String desc, double precoCusto) {
-        init(desc, precoCusto, MARGEM_PADRAO);
+    public Produto(String desc, double precoCusto) {
+        this.descricao = desc;
+        this.precoCusto = precoCusto;
+        this.margemLucro = MARGEM_PADRAO;
     }
 
     public abstract double valorVenda();
 
-    public String getDescricao() {
-        return descricao;
-    }
-
-    public double getPrecoCusto() {
-        return precoCusto;
-    }
-
-    public double getMargemLucro() {
-        return margemLucro;
-    }
-
-    @Override
     public String toString() {
-        return String.format(
-            "Produto: %s | Preco de custo: R$ %.2f | Margem de lucro: %.0f%% | Preco de venda: R$ %.2f",
-            descricao, precoCusto, margemLucro * 100, valorVenda());
+        return "Produto: " + descricao +
+               " | Custo: R$ " + precoCusto +
+               " | Margem: " + (margemLucro * 100) + "%" +
+               " | Venda: R$ " + valorVenda();
     }
 }
 
@@ -55,13 +41,10 @@ public class ProdutoNaoPerecivel extends Produto {
         super(desc, precoCusto);
     }
 
-    @Override
     public double valorVenda() {
-        return precoCusto * (1 + margemLucro);
+        return precoCusto + (precoCusto * margemLucro);
     }
 }
-
-
 
 
 
@@ -78,32 +61,30 @@ public class ProdutoPerecivel extends Produto {
     public ProdutoPerecivel(String desc, double precoCusto, double margemLucro, LocalDate validade) {
         super(desc, precoCusto, margemLucro);
         if (validade.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException(
-                "A data de validade nao pode ser anterior ao dia atual.");
+            System.out.println("Erro: a data de validade nao pode ser anterior a hoje.");
+        } else {
+            this.dataDeValidade = validade;
         }
-        this.dataDeValidade = validade;
     }
 
-    @Override
     public double valorVenda() {
         LocalDate hoje = LocalDate.now();
+
         if (dataDeValidade.isBefore(hoje)) {
-            throw new IllegalStateException(
-                "Produto fora da data de validade, nao pode ser vendido.");
+            System.out.println("Erro: produto vencido, nao pode ser vendido.");
+            return 0;
         }
-        double preco = precoCusto * (1 + margemLucro);
+
+        double preco = precoCusto + (precoCusto * margemLucro);
+
         long diasRestantes = ChronoUnit.DAYS.between(hoje, dataDeValidade);
         if (diasRestantes <= PRAZO_DESCONTO) {
-            preco = preco * (1 - DESCONTO);
+            preco = preco - (preco * DESCONTO);
         }
+
         return preco;
     }
 
-    public LocalDate getDataDeValidade() {
-        return dataDeValidade;
-    }
-
-    @Override
     public String toString() {
         return super.toString() + " | Validade: " + dataDeValidade;
     }
